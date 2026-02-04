@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from .config import settings
 
-# Use argon2 for better compatibility and security
+# Use argon2 for password hashing (modern, secure algorithm)
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
