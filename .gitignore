@@ -37,6 +37,7 @@ build/
 *.db
 *.sqlite
 *.sqlite3
+postgres_data/
 
 # OS
 .DS_Store
@@ -52,3 +53,7 @@ htmlcov/
 coverage/
 *.cover
 .pytest_cache/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
