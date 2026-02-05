@@ -26,16 +26,23 @@ const ProjectSelection: React.FC = () => {
       setApiError(null);
       setLoading(true);
       const projectsData = await projectService.listProjects();
-      setProjects(projectsData);
+      
+      // Validate that we received an array
+      const validProjects = Array.isArray(projectsData) ? projectsData : [];
+      setProjects(validProjects);
+      console.log('Projects loaded successfully:', validProjects.length, 'projects');
       
       // If user has no projects, show create form
-      if (projectsData.length === 0) {
+      if (validProjects.length === 0) {
         setShowCreateForm(true);
       }
     } catch (err: any) {
       console.error('Failed to load projects:', err);
       const errorMessage = err.response?.data?.detail || err.message || 'Failed to load projects. Please try again.';
       setApiError(errorMessage);
+      
+      // Set projects to empty array on error
+      setProjects([]);
       
       // If it's an authentication error, redirect to login
       if (err.response?.status === 401) {
@@ -64,7 +71,9 @@ const ProjectSelection: React.FC = () => {
 
     try {
       const createdProject = await projectService.createProject(newProject);
-      setProjects([...projects, createdProject]);
+      // Ensure projects is an array before spreading
+      const currentProjects = Array.isArray(projects) ? projects : [];
+      setProjects([...currentProjects, createdProject]);
       setNewProject({ name: '', description: '' });
       setShowCreateForm(false);
       
@@ -141,7 +150,7 @@ const ProjectSelection: React.FC = () => {
                 Create New Project
               </button>
             </div>
-          ) : (
+          ) : Array.isArray(projects) && projects.length > 0 ? (
             <>
               <div className="settings-grid" style={{ marginTop: '20px' }}>
                 {projects.map((project) => (
@@ -172,7 +181,7 @@ const ProjectSelection: React.FC = () => {
                 </button>
               )}
             </>
-          )}
+          ) : null}
 
           {showCreateForm && (
             <div style={{ marginTop: '20px', borderTop: '1px solid #ddd', paddingTop: '20px' }}>

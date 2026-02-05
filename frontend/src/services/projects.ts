@@ -4,7 +4,8 @@ import { Project, ProjectCreate, ProjectUpdate } from '../types';
 class ProjectService {
   async listProjects(): Promise<Project[]> {
     const response = await api.get('/projects/');
-    return response.data;
+    // Ensure we always return an array
+    return Array.isArray(response.data) ? response.data : [];
   }
 
   async createProject(data: ProjectCreate): Promise<Project> {

@@ -32,16 +32,54 @@ const Dashboard: React.FC = () => {
         return;
       }
 
-      const [userData, projectData, settingsData, pluginsData] = await Promise.all([
-        authService.getCurrentUser(),
-        projectService.getProject(projectId),
-        settingsService.listSettings(projectId),
-        dccService.listPlugins(),
-      ]);
-      setUser(userData);
-      setProject(projectData);
-      setSettings(settingsData);
-      setDccPlugins(pluginsData);
+      // Load user data first - this is critical
+      try {
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+        console.log('User data loaded successfully');
+      } catch (err: any) {
+        console.error('Failed to load user data:', err);
+        // If it's an authentication error, redirect to login
+        if (err.response?.status === 401) {
+          authService.logout();
+          projectService.clearSelectedProject();
+          navigate('/login');
+          return;
+        }
+        throw err; // Re-throw for outer catch
+      }
+
+      // Load project data - this is critical
+      try {
+        const projectData = await projectService.getProject(projectId);
+        setProject(projectData);
+        console.log('Project data loaded successfully');
+      } catch (err: any) {
+        console.error('Failed to load project data:', err);
+        throw err; // Re-throw for outer catch
+      }
+
+      // Load settings - non-critical, continue if fails
+      try {
+        const settingsData = await settingsService.listSettings(projectId);
+        const validSettings = Array.isArray(settingsData) ? settingsData : [];
+        setSettings(validSettings);
+        console.log('Settings data loaded successfully:', validSettings.length, 'settings');
+      } catch (err: any) {
+        console.error('Failed to load settings:', err);
+        setSettings([]); // Set empty array on failure
+      }
+
+      // Load DCC plugins - non-critical, continue if fails
+      try {
+        const pluginsData = await dccService.listPlugins();
+        const validPlugins = Array.isArray(pluginsData) ? pluginsData : [];
+        setDccPlugins(validPlugins);
+        console.log('DCC plugins loaded successfully:', validPlugins.length, 'plugins');
+      } catch (err: any) {
+        console.error('Failed to load DCC plugins:', err);
+        setDccPlugins([]); // Set empty array on failure
+      }
     } catch (err: any) {
       console.error('Failed to load data:', err);
       const errorMessage = err.response?.data?.detail || err.message || 'Failed to load dashboard data. Please try again.';
@@ -154,7 +192,7 @@ const Dashboard: React.FC = () => {
         {activeTab === 'settings' && (
           <div className="card">
             <h2>My Settings</h2>
-            {settings.length === 0 ? (
+            {!Array.isArray(settings) || settings.length === 0 ? (
               <p style={{ color: '#666', marginTop: '20px' }}>
                 No settings configured yet. Configure your DCC tools in the DCC Tools tab.
               </p>
@@ -178,21 +216,27 @@ const Dashboard: React.FC = () => {
             <p style={{ color: '#666', marginBottom: '20px' }}>
               Configure your Digital Content Creation tools settings
             </p>
-            <div className="settings-grid">
-              {dccPlugins.map((plugin) => (
-                <div key={plugin.name} className="setting-item">
-                  <h4>{plugin.display_name}</h4>
-                  <p>{plugin.description}</p>
-                  <button
-                    className="btn btn-primary"
-                    style={{ marginTop: '12px' }}
-                    onClick={() => navigate(`/settings/${plugin.name}`)}
-                  >
-                    Configure
-                  </button>
-                </div>
-              ))}
-            </div>
+            {!Array.isArray(dccPlugins) || dccPlugins.length === 0 ? (
+              <p style={{ color: '#666', marginTop: '20px' }}>
+                No DCC plugins available.
+              </p>
+            ) : (
+              <div className="settings-grid">
+                {dccPlugins.map((plugin) => (
+                  <div key={plugin.name} className="setting-item">
+                    <h4>{plugin.display_name}</h4>
+                    <p>{plugin.description}</p>
+                    <button
+                      className="btn btn-primary"
+                      style={{ marginTop: '12px' }}
+                      onClick={() => navigate(`/settings/${plugin.name}`)}
+                    >
+                      Configure
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
