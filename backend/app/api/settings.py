@@ -12,12 +12,16 @@ router = APIRouter(prefix="/settings", tags=["Settings"])
 
 @router.get("/", response_model=List[UserSettingResponse])
 def list_user_settings(
+    project_id: int,
     category: str = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """List all settings for the current user, optionally filtered by category."""
-    query = db.query(UserSetting).filter(UserSetting.user_id == current_user.id)
+    """List all settings for the current user in a specific project, optionally filtered by category."""
+    query = db.query(UserSetting).filter(
+        UserSetting.user_id == current_user.id,
+        UserSetting.project_id == project_id
+    )
     
     if category:
         query = query.filter(UserSetting.category == category)
@@ -33,9 +37,26 @@ def create_user_setting(
     current_user: User = Depends(get_current_user)
 ):
     """Create a new setting for the current user."""
+    # Verify user has access to the project
+    from app.models import Project, user_projects
+    project_access = db.query(Project).join(
+        user_projects,
+        Project.id == user_projects.c.project_id
+    ).filter(
+        Project.id == setting_data.project_id,
+        user_projects.c.user_id == current_user.id
+    ).first()
+    
+    if not project_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to this project"
+        )
+    
     # Check if setting already exists
     existing_setting = db.query(UserSetting).filter(
         UserSetting.user_id == current_user.id,
+        UserSetting.project_id == setting_data.project_id,
         UserSetting.category == setting_data.category,
         UserSetting.key == setting_data.key
     ).first()
@@ -43,11 +64,12 @@ def create_user_setting(
     if existing_setting:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Setting with category '{setting_data.category}' and key '{setting_data.key}' already exists"
+            detail=f"Setting with category '{setting_data.category}' and key '{setting_data.key}' already exists in this project"
         )
     
     new_setting = UserSetting(
         user_id=current_user.id,
+        project_id=setting_data.project_id,
         category=setting_data.category,
         key=setting_data.key,
         value=setting_data.value,

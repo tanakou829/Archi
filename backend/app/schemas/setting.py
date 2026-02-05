@@ -5,6 +5,7 @@ from datetime import datetime
 
 class UserSettingBase(BaseModel):
     """Base user setting schema."""
+    project_id: int = Field(..., description="Project ID this setting belongs to")
     category: str = Field(..., description="Setting category (e.g., maya, blender, houdini)")
     key: str = Field(..., description="Setting key")
     value: Optional[str] = Field(None, description="Setting value (JSON string or plain text)")
