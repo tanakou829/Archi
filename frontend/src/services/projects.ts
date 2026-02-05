@@ -1,4 +1,4 @@
-import { api } from './api';
+import api from './api';
 import { Project, ProjectCreate, ProjectUpdate } from '../types';
 
 class ProjectService {

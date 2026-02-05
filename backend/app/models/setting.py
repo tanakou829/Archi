@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -22,5 +22,6 @@ class UserSetting(Base):
     user = relationship("User", back_populates="settings")
     project = relationship("Project", back_populates="settings")
     
-    class Meta:
-        unique_together = [["user_id", "project_id", "category", "key"]]
+    __table_args__ = (
+        UniqueConstraint('user_id', 'project_id', 'category', 'key', name='uq_user_project_category_key'),
+    )
