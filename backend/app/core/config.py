@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 import os
+import json
 
 
 class Settings(BaseSettings):
@@ -27,11 +28,30 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     def get_allowed_origins(self) -> List[str]:
-        """Parse ALLOWED_ORIGINS from comma-separated string."""
+        """Parse ALLOWED_ORIGINS from comma-separated string, list, or JSON array."""
         value = self.ALLOWED_ORIGINS
-        if not value or not value.strip():
-            return []
-        return [origin.strip() for origin in value.split(',') if origin.strip()]
+        
+        # If already a list, return it (cleaned)
+        if isinstance(value, list):
+            return [origin.strip() for origin in value if origin and isinstance(origin, str) and origin.strip()]
+        
+        # If string, try to parse
+        if isinstance(value, str):
+            # First, try parsing as JSON
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return [origin.strip() for origin in parsed if origin and isinstance(origin, str) and origin.strip()]
+            except (json.JSONDecodeError, ValueError):
+                pass
+            
+            # Otherwise, treat as comma-separated string
+            if not value or not value.strip():
+                return []
+            return [origin.strip() for origin in value.split(',') if origin.strip()]
+        
+        # Fallback to empty list
+        return []
 
 
 # Create settings instance and replace ALLOWED_ORIGINS with parsed list
