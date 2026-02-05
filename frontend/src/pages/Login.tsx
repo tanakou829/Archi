@@ -26,7 +26,7 @@ const Login: React.FC = () => {
 
     try {
       await authService.login(formData);
-      navigate('/dashboard');
+      navigate('/projects');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed');
     } finally {

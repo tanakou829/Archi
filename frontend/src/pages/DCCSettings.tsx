@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { dccService } from '../services/dcc';
 import { settingsService } from '../services/settings';
+import { projectService } from '../services/projects';
 import { DCCPluginTemplate, DCCSettingTemplate, UserSetting } from '../types';
 
 const DCCSettings: React.FC = () => {
@@ -22,9 +23,15 @@ const DCCSettings: React.FC = () => {
     try {
       if (!pluginName) return;
       
+      const projectId = projectService.getSelectedProject();
+      if (!projectId) {
+        navigate('/projects');
+        return;
+      }
+      
       const [templateData, settingsData] = await Promise.all([
         dccService.getPluginTemplate(pluginName),
-        settingsService.listSettings(pluginName),
+        settingsService.listSettings(projectId, pluginName),
       ]);
 
       setTemplate(templateData);
@@ -59,6 +66,12 @@ const DCCSettings: React.FC = () => {
     try {
       if (!pluginName) return;
 
+      const projectId = projectService.getSelectedProject();
+      if (!projectId) {
+        navigate('/projects');
+        return;
+      }
+
       // Save or update each setting
       for (const [key, value] of Object.entries(formData)) {
         const existing = existingSettings.find((s) => s.key === key);
@@ -73,6 +86,7 @@ const DCCSettings: React.FC = () => {
         } else {
           // Create new setting
           await settingsService.createSetting({
+            project_id: projectId,
             category: pluginName,
             key,
             value,
