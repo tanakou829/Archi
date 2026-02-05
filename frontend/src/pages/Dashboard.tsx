@@ -5,6 +5,7 @@ import { settingsService } from '../services/settings';
 import { dccService } from '../services/dcc';
 import { projectService } from '../services/projects';
 import { User, UserSetting, DCCPlugin, Project } from '../types';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const Dashboard: React.FC = () => {
   const [dccPlugins, setDccPlugins] = useState<DCCPlugin[]>([]);
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -21,6 +23,9 @@ const Dashboard: React.FC = () => {
 
   const loadData = async () => {
     try {
+      setApiError(null);
+      setLoading(true);
+      
       const projectId = projectService.getSelectedProject();
       if (!projectId) {
         navigate('/projects');
@@ -37,9 +42,17 @@ const Dashboard: React.FC = () => {
       setProject(projectData);
       setSettings(settingsData);
       setDccPlugins(pluginsData);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load data:', err);
-      navigate('/login');
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to load dashboard data. Please try again.';
+      setApiError(errorMessage);
+      
+      // If it's an authentication error, redirect to login
+      if (err.response?.status === 401) {
+        authService.logout();
+        projectService.clearSelectedProject();
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -56,7 +69,29 @@ const Dashboard: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="container">
+        <div className="card" style={{ maxWidth: '600px', margin: '50px auto', textAlign: 'center' }}>
+          <div className="loading">Loading dashboard...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show API error with retry option
+  if (apiError) {
+    return (
+      <div className="container">
+        <div className="card" style={{ maxWidth: '600px', margin: '50px auto' }}>
+          <h2>Dashboard Error</h2>
+          <ErrorDisplay 
+            error={apiError}
+            onRetry={loadData}
+            onGoBack={() => navigate('/projects')}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (

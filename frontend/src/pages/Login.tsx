@@ -28,7 +28,15 @@ const Login: React.FC = () => {
       await authService.login(formData);
       navigate('/projects');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed');
+      console.error('Login error:', err);
+      
+      // Clear stale data on login failure to prevent issues with invalid tokens
+      localStorage.removeItem('token');
+      localStorage.removeItem('selectedProjectId');
+      
+      // Provide detailed error message
+      const errorMessage = err.response?.data?.detail || err.message || 'Login failed. Please check your credentials and try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

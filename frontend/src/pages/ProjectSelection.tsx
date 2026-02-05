@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { projectService } from '../services/projects';
 import { authService } from '../services/auth';
 import { Project, ProjectCreate } from '../types';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 const ProjectSelection: React.FC = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const ProjectSelection: React.FC = () => {
     description: '',
   });
   const [error, setError] = useState('');
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     loadProjects();
@@ -21,6 +23,8 @@ const ProjectSelection: React.FC = () => {
 
   const loadProjects = async () => {
     try {
+      setApiError(null);
+      setLoading(true);
       const projectsData = await projectService.listProjects();
       setProjects(projectsData);
       
@@ -28,9 +32,17 @@ const ProjectSelection: React.FC = () => {
       if (projectsData.length === 0) {
         setShowCreateForm(true);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load projects:', err);
-      setError('Failed to load projects');
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to load projects. Please try again.';
+      setApiError(errorMessage);
+      
+      // If it's an authentication error, redirect to login
+      if (err.response?.status === 401) {
+        authService.logout();
+        projectService.clearSelectedProject();
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -71,7 +83,29 @@ const ProjectSelection: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="container">
+        <div className="card" style={{ maxWidth: '600px', margin: '50px auto', textAlign: 'center' }}>
+          <div className="loading">Loading projects...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show API error with retry option
+  if (apiError) {
+    return (
+      <div className="container">
+        <div className="card" style={{ maxWidth: '600px', margin: '50px auto' }}>
+          <h2>Project Selection</h2>
+          <ErrorDisplay 
+            error={apiError}
+            onRetry={loadProjects}
+            showLoginButton={true}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
