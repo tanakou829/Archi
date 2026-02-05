@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://archi-api.onrender.com/api/:path*"
+      "destination": "https://archi-t21r.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
