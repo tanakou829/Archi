@@ -39,6 +39,7 @@ export interface Token {
 export interface UserSetting {
   id: number;
   user_id: number;
+  project_id: number;
   category: string;
   key: string;
   value?: string;
@@ -48,6 +49,7 @@ export interface UserSetting {
 }
 
 export interface UserSettingCreate {
+  project_id: number;
   category: string;
   key: string;
   value?: string;
@@ -77,4 +79,25 @@ export interface DCCSettingTemplate {
 
 export interface DCCPluginTemplate extends DCCPlugin {
   settings: DCCSettingTemplate[];
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  description?: string;
+  created_by: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ProjectCreate {
+  name: string;
+  description?: string;
+}
+
+export interface ProjectUpdate {
+  name?: string;
+  description?: string;
+  is_active?: boolean;
 }

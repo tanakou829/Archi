@@ -19,5 +19,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relationship to settings
+    # Relationships
     settings = relationship("UserSetting", back_populates="user", cascade="all, delete-orphan")
+    created_projects = relationship("Project", foreign_keys="Project.created_by", back_populates="creator")
+    projects = relationship("Project", secondary="user_projects", back_populates="members")

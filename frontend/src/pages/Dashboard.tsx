@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';
 import { settingsService } from '../services/settings';
 import { dccService } from '../services/dcc';
-import { User, UserSetting, DCCPlugin } from '../types';
+import { projectService } from '../services/projects';
+import { User, UserSetting, DCCPlugin, Project } from '../types';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
   const [settings, setSettings] = useState<UserSetting[]>([]);
   const [dccPlugins, setDccPlugins] = useState<DCCPlugin[]>([]);
   const [activeTab, setActiveTab] = useState('profile');
@@ -19,12 +21,20 @@ const Dashboard: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const [userData, settingsData, pluginsData] = await Promise.all([
+      const projectId = projectService.getSelectedProject();
+      if (!projectId) {
+        navigate('/projects');
+        return;
+      }
+
+      const [userData, projectData, settingsData, pluginsData] = await Promise.all([
         authService.getCurrentUser(),
-        settingsService.listSettings(),
+        projectService.getProject(projectId),
+        settingsService.listSettings(projectId),
         dccService.listPlugins(),
       ]);
       setUser(userData);
+      setProject(projectData);
       setSettings(settingsData);
       setDccPlugins(pluginsData);
     } catch (err) {
@@ -37,7 +47,12 @@ const Dashboard: React.FC = () => {
 
   const handleLogout = () => {
     authService.logout();
+    projectService.clearSelectedProject();
     navigate('/login');
+  };
+
+  const handleChangeProject = () => {
+    navigate('/projects');
   };
 
   if (loading) {
@@ -59,6 +74,13 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="container">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ margin: 0 }}>Project: {project?.name}</h2>
+          <button onClick={handleChangeProject} className="btn btn-secondary">
+            Change Project
+          </button>
+        </div>
+
         <div className="tabs">
           <button
             className={`tab ${activeTab === 'profile' ? 'active' : ''}`}

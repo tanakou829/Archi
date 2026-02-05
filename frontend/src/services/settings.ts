@@ -2,8 +2,11 @@ import api from './api';
 import { UserSetting, UserSettingCreate, UserSettingUpdate } from '../types';
 
 export const settingsService = {
-  async listSettings(category?: string): Promise<UserSetting[]> {
-    const params = category ? { category } : {};
+  async listSettings(projectId: number, category?: string): Promise<UserSetting[]> {
+    const params: any = { project_id: projectId };
+    if (category) {
+      params.category = category;
+    }
     const response = await api.get<UserSetting[]>('/settings/', { params });
     return response.data;
   },
