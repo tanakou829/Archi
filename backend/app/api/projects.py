@@ -35,29 +35,37 @@ def create_project(
     current_user: User = Depends(get_current_user)
 ):
     """Create a new project."""
-    # Create new project
-    new_project = Project(
-        name=project_data.name,
-        description=project_data.description,
-        created_by=current_user.id,
-    )
-    
-    db.add(new_project)
-    db.flush()  # Flush to get the project ID
-    
-    # Add creator as owner in the association table
-    from sqlalchemy import insert
-    stmt = insert(user_projects).values(
-        user_id=current_user.id,
-        project_id=new_project.id,
-        role='owner'
-    )
-    db.execute(stmt)
-    
-    db.commit()
-    db.refresh(new_project)
-    
-    return new_project
+    try:
+        # Create new project
+        new_project = Project(
+            name=project_data.name,
+            description=project_data.description,
+            created_by=current_user.id,
+        )
+        
+        db.add(new_project)
+        db.flush()  # Flush to get the project ID
+        
+        # Add creator as owner in the association table
+        from sqlalchemy import insert
+        stmt = insert(user_projects).values(
+            user_id=current_user.id,
+            project_id=new_project.id,
+            role='owner'
+        )
+        db.execute(stmt)
+        
+        db.commit()
+        db.refresh(new_project)
+        
+        return new_project
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating project: {str(e)}")  # ログ出力を追加
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create project: {str(e)}"
+        )
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)

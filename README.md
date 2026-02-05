@@ -243,3 +243,43 @@ MIT License
 ## 貢献
 
 プルリクエストを歓迎します。大きな変更の場合は、まずissueを開いて変更内容を議論してください。
+
+## トラブルシューティング
+
+### HTTP 405 エラー (Method Not Allowed)
+
+プロジェクト作成時に405エラーが発生する場合:
+
+1. **バックエンドサーバーが起動していることを確認**
+   ```bash
+   cd backend
+   uvicorn main:app --reload --port 8000
+   ```
+   ブラウザで http://localhost:8000/api/docs にアクセスして、API ドキュメントが表示されることを確認
+
+2. **フロントエンドが正しいポートで起動していることを確認**
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+   http://localhost:3000 でアクセス
+
+3. **ブラウザのコンソールとネットワークタブを確認**
+   - DevTools を開く (F12)
+   - Network タブで `/api/projects/` へのリクエストを確認
+   - リクエストメソッドが POST であることを確認
+   - レスポンスの詳細を確認
+
+4. **データベースが正しく初期化されていることを確認**
+   ```bash
+   cd backend
+   rm test.db  # 既存のDBを削除
+   python -m uvicorn main:app --reload  # 再起動すると自動的にテーブルが作成される
+   ```
+
+### CORS エラー
+
+CORS エラーが発生する場合、backend/.env ファイルで ALLOWED_ORIGINS を確認:
+```
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+```
