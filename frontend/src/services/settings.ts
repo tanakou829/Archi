@@ -8,7 +8,8 @@ export const settingsService = {
       params.category = category;
     }
     const response = await api.get<UserSetting[]>('/settings/', { params });
-    return response.data;
+    // Ensure we always return an array
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   async createSetting(settingData: UserSettingCreate): Promise<UserSetting> {
