@@ -9,8 +9,21 @@ class ProjectService {
   }
 
   async createProject(data: ProjectCreate): Promise<Project> {
-    const response = await api.post('/projects/', data);
-    return response.data;
+    try {
+      console.log('Creating project with data:', data);
+      const response = await api.post('/projects/', data);
+      console.log('Project created successfully:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to create project:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url,
+        method: error.config?.method
+      });
+      throw error;
+    }
   }
 
   async getProject(projectId: number): Promise<Project> {
