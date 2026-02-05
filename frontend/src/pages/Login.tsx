@@ -30,8 +30,8 @@ const Login: React.FC = () => {
     } catch (err: any) {
       console.error('Login error:', err);
       
-      // Clear stale data on login failure
-      authService.logout();
+      // Clear stale data on login failure to prevent issues with invalid tokens
+      localStorage.removeItem('token');
       localStorage.removeItem('selectedProjectId');
       
       // Provide detailed error message
