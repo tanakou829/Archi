@@ -33,7 +33,7 @@ class Settings(BaseSettings):
         
         # If already a list, return it (cleaned)
         if isinstance(value, list):
-            return [origin.strip() for origin in value if origin and isinstance(origin, str)]
+            return [origin.strip() for origin in value if origin and isinstance(origin, str) and origin.strip()]
         
         # If string, try to parse
         if isinstance(value, str):
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
             try:
                 parsed = json.loads(value)
                 if isinstance(parsed, list):
-                    return [origin.strip() for origin in parsed if origin and isinstance(origin, str)]
+                    return [origin.strip() for origin in parsed if origin and isinstance(origin, str) and origin.strip()]
             except (json.JSONDecodeError, ValueError):
                 pass
             
