@@ -81,7 +81,23 @@ const ProjectSelection: React.FC = () => {
       handleSelectProject(createdProject.id);
     } catch (err: any) {
       console.error('Failed to create project:', err);
-      setError(err.response?.data?.detail || 'Failed to create project');
+      console.error('Full error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        url: err.config?.url
+      });
+      
+      // Check if it's a network error
+      if (!err.response) {
+        setError('Cannot connect to server. Please check your internet connection.');
+        return;
+      }
+      
+      const errorMessage = err.response?.data?.detail 
+        || err.message 
+        || 'Failed to create project. Please try again.';
+      setError(errorMessage);
     }
   };
 

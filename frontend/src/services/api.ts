@@ -1,6 +1,12 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+// Use environment variable for API URL, fallback to production backend URL
+// In development, Vite proxy will forward /api to localhost:8000
+// In production, use the full backend URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' 
+    ? 'https://archi-t21r.onrender.com/api'
+    : '/api');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
